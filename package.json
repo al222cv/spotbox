@@ -1,0 +1,32 @@
+{
+  "name": "spotbox",
+  "description": "stream music from spotify to your spotbox",
+  "version": "0.0.1",
+  "main": "index.js",
+  "author": {
+    "name" : "Andreas Larsson",
+    "email" : "al222cv@gmail.com"
+  },
+  "keywords" : [
+    "music",
+    "player",
+    "streaming"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "express": "3.x",
+    "hyperglue": "~1.3.0",
+    "hyperdirect": "0.0.0",
+    "supervisor": "~0.5.6",
+    "stack": "~0.1.0",
+    "tiny-route": "~2.1.0",
+    "through": "~2.3.4",
+    "hyperquest": "~0.1.8",
+    "JSONStream": "~0.7.1",
+    "youtube-audio-stream": "0.0.1",
+    "spotify-web": "~0.1.3",
+    "speaker": "0.0.10",
+    "lame": "~1.0.3",
+    "xml2js": "0.2.8"
+  }
+}

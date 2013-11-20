@@ -1,0 +1,9 @@
+{
+  "port": 3000,
+  "max_search_results": 10,
+  "sources": ["spotify"],
+  "spotify_user": "x",
+  "spotify_password": "x",
+  "service_credentials": "x:x",
+  "player": true
+}

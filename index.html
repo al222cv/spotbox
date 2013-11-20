@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en" ng-app="app">
+<head>
+    <link href="app.css" type="text/css" rel="stylesheet">
+    <meta id="vp" name="viewport" content="width=device-width,height=device-height, initial-scale=1.0,maximum-scale=1.0,user-scalable=0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+</head>
+<body>
+    <header>
+        <button>☰</button>
+        <h2>{{pageTitle}}</h2>
+    </header>
+	<div class="content" ng-view></div>
+	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.1/angular.js"></script>
+	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.1/angular-route.min.js"></script>
+	<script type="text/javascript" src="js/app.js"></script>
+</body>
+</html>
