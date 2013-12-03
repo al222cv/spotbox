@@ -42,7 +42,7 @@ app.controller('PlaylistCtrl', ['$scope', '$location', '$player', function($scop
 	$scope.$on('changed',getTracks);
 
 	getTracks();
-	//updateTracks();
+	$player.updateTracks(id);
 
 	$scope.play = function(track, i){
 		$player.play(track);
