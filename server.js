@@ -12,6 +12,10 @@ app.engine('html', require('ejs').renderFile);
 
 app.get('/', routes.main);
 app.get('/api/search', routes.search);
+app.get('/api/albumart', routes.albumart);
+app.get('/api/playlists', routes.playlists);
+app.get('/api/playlist', routes.playlist);
+app.get('/api/albumart', routes.albumart);
 app.get('/api/play', routes.play);
 app.get('/api/stop', routes.stop);
 

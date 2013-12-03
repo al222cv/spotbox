@@ -1,12 +1,28 @@
-var Spotify = require('spotify-web');
-var config 	= require('./config');
-var through    = require('through');
-var hyperquest = require('hyperquest');
-var JSONStream = require('JSONStream');
+var Spotify 	= require('spotify-web');
+var config 		= require('./config');
+var through    	= require('through');
+var hyperquest 	= require('hyperquest');
+var JSONStream 	= require('JSONStream');
+var http		= require('http');
 
 module.exports = {
-	search: search
+	search: search,
+	albumArt: albumArt,
+	playlist: playlist,
+	playlists: playlists
 };
+
+function parseTrack(track){
+	var artist = track.artists.map(function(x) { return x.name; }).join(', ');
+	var ms = parseInt(track.length, 10) * 1000;
+	return {
+		albumUri: track.album.href,
+		uri: track.href,
+		artist: artist,
+		title: track.name,
+		durationMs: ms,
+	};
+}
 
 function search(term, callback){
 	var uri = 'http://ws.spotify.com/search/1/track.json?q='  + term;
@@ -26,30 +42,71 @@ function search(term, callback){
 	function end() {
 		callback(tracks);
 	}
-
-  	function parseTrack(track){
-		var artist = track.artists.map(function(x) { return x.name; }).join(', ');
-		var ms = parseInt(track.length, 10) * 1000;
-		return {
-			uri: track.href,
-			artist: artist,
-			title: track.name,
-			durationMs: ms,
-		};
-	}
 }
 
-function play(uri){
-	var stream = through();
+function albumArt(albumUri, callback){
 	Spotify.login(config.spotify_user, config.spotify_password, function (err, spotify) {
 		if (err) throw err;
-		spotify.get(uri, function(err, track) {
-	  		if (err) throw err;
-			  	track
-		    	.play()
-				.pipe(stream)
-				.on('finish', spotify.disconnect.bind(spotify));
+
+		spotify.get(albumUri, function (err, album) {
+			if (err) throw err;
+		
+			album.cover.forEach(function (image) {
+				if(image.size == 'SMALL')
+					callback(image.uri);
+				//console.log('%s: %s', image.size, image.uri);
+			});
+
+	    	spotify.disconnect();
 		});
 	});
-	return stream;
+}
+
+function playlist(uri, callback){
+	Spotify.login(config.spotify_user, config.spotify_password, function (err, spotify) {
+	  if (err) throw err;
+
+	  var skip = 0;
+	  var take = 9999; 
+
+	  spotify.playlist(uri, skip, take, function (err, playlist) {
+	    if (err) throw err;
+
+	    var uri = 'http://ws.spotify.com/lookup/1/.json?uri=';
+		var parsingKeys = ['track', true];
+		var tracks = [];
+  		var playlistItems = playlist.contents.items;
+	    
+	    spotify.disconnect();
+
+		playlistItems.forEach(function(item){
+	    	http.get(uri + item.uri, function(res) {
+			   res.on('data', function (chunk) {
+			   	var track = parseTrack(JSON.parse(chunk).track)
+			    tracks.push(track);
+			    end();
+			  });
+			});
+	    });
+		
+		function end() {
+			if(playlistItems.length == tracks.length)
+				callback(tracks);
+		}
+
+	  });
+	});
+}
+
+function playlists(callback){
+	Spotify.login(config.spotify_user, config.spotify_password, function (err, spotify) {
+	  if (err) throw err;
+
+	  spotify.rootlist(function (err, rootlist) {
+	    if (err) throw err;
+
+	    callback(rootlist.contents.items);
+	    spotify.disconnect();
+	  });
+	});
 }

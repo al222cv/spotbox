@@ -12,6 +12,7 @@ module.exports = function(uri) {
         .play()
         .pipe(stream)
         .on('finish', spotify.disconnect.bind(spotify))
+        //todo: tell client that i'm finished and start playing next track
       ;
     });
   });

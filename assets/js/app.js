@@ -1,244 +1,285 @@
-﻿var app = angular.module('app', ['ngRoute'], ['$routeProvider', function ($routeProvider) {
+﻿var app = angular.module('app', ['ngRoute', 'ngTouch'], ['$routeProvider', function ($routeProvider) {
 	$routeProvider.when('/', {
 		controller: 'HomeCtrl',
 		templateUrl: 'templates/home.html'
 	})
-	
-	.when('/playlist/:id',{
-		controller: 'PlaylistCtrl',
-		templateUrl: 'templates/playlist.html'
+	.when('/search', {
+		controller: 'SearchCtrl',
+		templateUrl: 'templates/search.html'
 	})
-
+	.when('/playlist', {
+      	controller: 'PlaylistCtrl',
+		templateUrl: 'templates/playlist.html'
+    })
 	.otherwise({ redirectTo: '/' });
 }]);
 
+app.controller('HomeCtrl', ['$scope','$http', '$pouchdb', function($scope, $http, $pouchdb){
+	$scope.$root.pageTitle = 'Playlists';
+	$scope.$on('changed',getPlaylists);
 
-app.controller('HomeCtrl', ['$scope','$http', function($scope, $http){
-	$scope.$root.pageTitle = 'Playlist';
+	getPlaylists();
+	updatePlaylists();
 
-	$scope.search = function(){
-		$http.get('api/search?term=' + $scope.term).success(function(tracks){
-			$scope.tracks = tracks;
-			console.log(tracks);
-		});
+	function updatePlaylists(){
+		$http.get('/api/playlists').success(function(playlists){
+			angular.forEach(playlists, function(playlist){
+				$pouchdb.addPlaylist(playlist);
+			});
+			
+		});	
+	}
+
+	function getPlaylists(){
+		$pouchdb.getPlaylists().then(function(playlists){
+			$scope.playlists = playlists;
+		});		
+	}
+}]);
+
+app.controller('PlaylistCtrl', ['$scope', '$location', '$player', function($scope, $location, $player){
+	var id = $location.search().id;
+	$scope.$on('changed',getTracks);
+
+	getTracks();
+	//updateTracks();
+
+	$scope.play = function(track, i){
+		$player.play(track);
+		$player.setQueueTracks($scope.tracks);
+		$scope.currTrack = i;
 	};
 
+	function getTracks(){
+		$player.getTracks(id).then(function(tracks){ $scope.tracks = tracks;});
+	}
+}]);
 
-	$scope.play = function(uri){
-		console.log(uri);
-		$http.get('/api/play?uri=' + uri).success(function(lol){
-		});
+app.controller('SearchCtrl', ['$scope','$http', '$location', '$player', function($scope,$http, $location, $player){
+	$scope.$root.pageTitle = 'Search:' + $location.search().term;
+
+	$player.searchTracks($location.search().term).then(function(tracks){
+		$scope.tracks = tracks;
+	})
+
+	$scope.play = function(track, i){
+		$player.play(track);
+		$player.setQueueTracks($scope.tracks);
+		$scope.currTrack = i;
 	};
 
-	$scope.stop = function(){
+}]);
+
+app.directive('header', ['$location', '$timeout', '$rootScope', function($location, $timeout, $rootScope){
+	return{
+		restrict: 'E',
+		scope:true,
+		link: function(scope, element){
+			var input = element.find('input')[0];
+			
+			scope.goHome = function(){
+				$location.path('/');
+			}
+
+			scope.goToSearch = function(){
+				scope.showSearch = true;
+			};
+
+			scope.search = function(){
+				if(!!!scope.term)return;
+				$location.path('search').search('term', scope.term);
+				scope.term = null;
+				$timeout(function () { 
+					input.blur();
+				}, 0, false);
+			};
+
+			scope.blur = function(){
+				scope.showSearch = false;
+			};
+		}
+	};
+}]);
+
+app.directive('player', ['$player', '$rootScope', function($player, $rootScope){
+	return {
+		restrict: 'C',
+		link: function(scope){
+			scope.stop = function(){
+				$player.stop();
+			};
+
+			scope.play = function(){
+				if(!!!$rootScope.playingTrack) return;
+				$player.play($rootScope.playingTrack);
+			};
+		}
+	};
+}]);
+
+app.factory('$player', ['$rootScope', '$http', '$q', '$pouchdb', '$timeout', function($rootScope, $http, $q, $pouchdb, $timeout){
+	return{
+		play: play,
+		stop: stop,
+		searchTracks: searchTracks,
+		getTracks: getTracks,
+		updateTracks: updateTracks,
+		setQueueTracks: setQueueTracks
+	}
+
+	var queue = [];
+
+	function searchTracks(term){
+		var wait = $q.defer(term);
+		
+		$http.get('api/search?term=' + term).success(function(tracks){
+			wait.resolve(tracks);
+		});
+
+		return wait.promise;
+	}
+
+	function setQueueTracks(tracks){
+		queue = tracks;
+	}
+
+	function getTracks(playlistId){
+		var wait = $q.defer();
+
+		$pouchdb.getTracks(playlistId).then(function(tracks){
+			wait.resolve(tracks);
+		});
+
+		return wait.promise;
+	}
+
+	function updateTracks(playlistId){
+		$http.get('api/playlist?uri=' + playlistId).success(function(tracks){
+			$pouchdb.addTracks(playlistId, tracks);
+		});	
+	}
+
+	function play(track){
+		$http.get('/api/play?uri=' + track.uri).success(function(m){
+			console.log(track);
+			$rootScope.playingTrack = track;
+			$rootScope.isPlaying = true;
+
+			$timeout(function(){
+				play(queue[Math.floor(Math.random()*queue.length)]);
+			}, track.durationMs);
+		});
+
+		$http.get('/api/albumart?albumUri=' + track.albumUri).success(function(albumUri){
+			$rootScope.playingAlbumArt = albumUri.uri;
+		});
+	}
+
+	function stop(){
 		$http.get('/api/stop').success(function(){
-			console.log('stopped');
+			$rootScope.isPlaying = false;
 		});
 	}
 }]);
 
+app.factory('$pouchdb', ['$rootScope', '$q', function($rootScope, $q){
+	var db = new PouchDB('spotbox');
+	var remoteCouch = 'http://' + window.location.hostname + ':5984/spotbox';
 
-app.controller('PlaylistCtrl', ['$scope','$http', '$routeParams', function($scope, $http, $routeParams){
-	console.log($routeParams);
-	$http.get('api/playlist').success(function(playlist){
-		console.log(playlist);
-		//$scope.playlists = playlists;
+	db.info(function(err, info){
+		db.changes({
+			since: info.update_seq,
+			continuous: true,
+			onChange: onChange
+		});
 	});
-}]);
+	
+	function onChange (change){
+		$rootScope.$apply(function(){
+			$rootScope.$broadcast('changed');
+		});
+	}
 
+	function sync() {
+		$rootScope.syncing = true;
+		var opts = {continuous: true, complete: function(){
+			$rootScope.syncing = false;
+			console.log('error');	
+		}};
+		db.replicate.to(remoteCouch, opts);
+		db.replicate.from(remoteCouch, opts);
+	}
 
-﻿app.factory('$localStorage', ['$rootScope', function ($rootScope) {
-	var prefix = 'sb.';
-	var cookie = { expiry: 30, path: '/' };
+	function addPlaylist(playlist){
+		var wait = $q.defer();
+		playlist._id = playlist.uri;
+		db.put(playlist, function(err, res){
+			$rootScope.$apply(function(){
+				if(err)
+					wait.reject(err);
+				else
+					wait.resolve(res);
+			});		
+		});
+		return wait.promise;
+	}
 
-	// Checks the browser to see if local storage is supported
-	var browserSupportsLocalStorage = function () {
-		try {
-			return ('localStorage' in window && window['localStorage'] !== null);
-		} catch (e) {
-			$rootScope.$broadcast('LocalStorageModule.notification.error', e.Description);
-			return false;
-		}
+	function addTracks(playlistId, tracks){
+		var wait = $q.defer();
+		db.get(playlistId, function(err, res){
+			res.tracks = tracks;
+			db.put(res, function(err, res){
+				$rootScope.$apply(function(){
+			 	if(err)
+			 		wait.reject(err);
+			 	else
+			 		wait.resolve(res);
+				});
+			});
+		});
+		return wait.promise;	
+	}
+
+	function getPlaylists(){
+		var wait = $q.defer();
+		var map = function(doc){
+			var trackscount = !!doc.tracks ? doc.tracks.length : 0;
+			emit(null, {id: doc._id, uri: doc.uri, trackscount: trackscount});
+		};
+
+		db.query({map: map}, function(err, res){
+			$rootScope.$apply(function() {
+	        	if (err) 
+	            	wait.reject(err);
+	          	else 
+	          		wait.resolve(res.rows);
+	        });
+		});
+
+		return wait.promise;
+	}
+
+	function getTracks(playlistId){
+		var wait = $q.defer();
+
+		db.get(playlistId, function(err, res){
+			$rootScope.$apply(function() {
+	        	if (err) 
+	            	wait.reject(err);
+	          	else 
+	          		wait.resolve(res.tracks);
+	        });
+		});
+
+		return wait.promise;		
+	}
+
+	sync();
+
+	return{
+		addPlaylist: addPlaylist,
+		addTracks: addTracks,
+		getPlaylists: getPlaylists,
+		getTracks: getTracks
 	};
-
-	// Directly adds a value to local storage
-	// If local storage is not available in the browser use cookies
-	// Example use: localStorageService.add('library','angular');
-	var addToLocalStorage = function (key, value) {
-
-		// If this browser does not support local storage use cookies
-		if (!browserSupportsLocalStorage()) {
-			$rootScope.$broadcast('LocalStorageModule.notification.warning', 'LOCAL_STORAGE_NOT_SUPPORTED');
-			return false;
-		}
-
-		// 0 and "" is allowed as a value but let's limit other falsey values like "undefined"
-		if (!value && value !== 0 && value !== "") return false;
-
-		try {
-			localStorage.setItem(prefix + key, value);
-		} catch (e) {
-			$rootScope.$broadcast('LocalStorageModule.notification.error', e.Description);
-			return false;
-		}
-		return true;
-	};
-
-	// Directly get a value from local storage
-	// Example use: localStorageService.get('library'); // returns 'angular'
-	var getFromLocalStorage = function (key) {
-		if (!browserSupportsLocalStorage()) {
-			$rootScope.$broadcast('LocalStorageModule.notification.warning', 'LOCAL_STORAGE_NOT_SUPPORTED');
-			return false;
-		}
-
-		var item = localStorage.getItem(prefix + key);
-		if (!item) return null;
-		return item;
-	};;
-
-	var getFromLocalStorageParseJson = function (key) {
-		return JSON.parse(getFromLocalStorage(key));
-	};
-
-	// Remove an item from local storage
-	// Example use: localStorageService.remove('library'); // removes the key/value pair of library='angular'
-	var removeFromLocalStorage = function (key) {
-		if (!browserSupportsLocalStorage()) {
-			$rootScope.$broadcast('LocalStorageModule.notification.warning', 'LOCAL_STORAGE_NOT_SUPPORTED');
-			return false;
-		}
-
-		try {
-			localStorage.removeItem(prefix + key);
-		} catch (e) {
-			$rootScope.$broadcast('LocalStorageModule.notification.error', e.Description);
-			return false;
-		}
-		return true;
-	};
-
-	// Remove all data for this app from local storage
-	// Example use: localStorageService.clearAll();
-	// Should be used mostly for development purposes
-	var clearAllFromLocalStorage = function () {
-
-		if (!browserSupportsLocalStorage()) {
-			$rootScope.$broadcast('LocalStorageModule.notification.warning', 'LOCAL_STORAGE_NOT_SUPPORTED');
-			return false;
-		}
-
-		var prefixLength = prefix.length;
-
-		for (var key in localStorage) {
-			// Only remove items that are for this app
-			if (key.substr(0, prefixLength) === prefix) {
-				try {
-					removeFromLocalStorage(key.substr(prefixLength));
-				} catch (e) {
-					$rootScope.$broadcast('LocalStorageModule.notification.error', e.Description);
-					return false;
-				}
-			}
-		}
-		return true;
-	};
-
-	// Checks the browser to see if cookies are supported
-	var browserSupportsCookies = function () {
-		try {
-			return navigator.cookieEnabled ||
-			("cookie" in document && (document.cookie.length > 0 ||
-				(document.cookie = "test").indexOf.call(document.cookie, "test") > -1));
-		} catch (e) {
-			$rootScope.$broadcast('LocalStorageModule.notification.error', e.Description);
-			return false;
-		}
-	};
-
-	// Directly adds a value to cookies
-	// Typically used as a fallback is local storage is not available in the browser
-	// Example use: localStorageService.cookie.add('library','angular');
-	var addToCookies = function (key, value) {
-
-		if (typeof value == "undefined") return false;
-
-		if (!browserSupportsCookies()) {
-			$rootScope.$broadcast('LocalStorageModule.notification.error', 'COOKIES_NOT_SUPPORTED');
-			return false;
-		}
-
-		try {
-			var expiry = '', expiryDate = new Date();
-			if (value === null) {
-				cookie.expiry = -1;
-				value = '';
-			}
-			if (cookie.expiry !== 0) {
-				expiryDate.setTime(expiryDate.getTime() + (cookie.expiry * 24 * 60 * 60 * 1000));
-				expiry = "; expires=" + expiryDate.toGMTString();
-			}
-			document.cookie = prefix + key + "=" + encodeURIComponent(value) + expiry + "; path=" + cookie.path;
-		} catch (e) {
-			$rootScope.$broadcast('LocalStorageModule.notification.error', e.Description);
-			return false;
-		}
-		return true;
-	};
-
-	// Directly get a value from a cookie
-	// Example use: localStorageService.cookie.get('library'); // returns 'angular'
-	var getFromCookies = function (key) {
-		if (!browserSupportsCookies()) {
-			$rootScope.$broadcast('LocalStorageModule.notification.error', 'COOKIES_NOT_SUPPORTED');
-			return false;
-		}
-
-		var cookies = document.cookie.split(';');
-		for (var i = 0; i < cookies.length; i++) {
-			var thisCookie = cookies[i];
-			while (thisCookie.charAt(0) == ' ') {
-				thisCookie = thisCookie.substring(1, thisCookie.length);
-			}
-			if (thisCookie.indexOf(prefix + key + '=') == 0) {
-				return decodeURIComponent(thisCookie.substring(prefix.length + key.length + 1, thisCookie.length));
-			}
-		}
-		return null;
-	};
-
-	var removeFromCookies = function (key) {
-		addToCookies(key, null);
-	};
-
-	var clearAllFromCookies = function () {
-		var thisCookie = null, thisKey = null;
-		var prefixLength = prefix.length;
-		var cookies = document.cookie.split(';');
-		for (var i = 0; i < cookies.length; i++) {
-			thisCookie = cookies[i];
-			while (thisCookie.charAt(0) == ' ') {
-				thisCookie = thisCookie.substring(1, thisCookie.length);
-			}
-			key = thisCookie.substring(prefixLength, thisCookie.indexOf('='));
-			removeFromCookies(key);
-		}
-	};
-
-
-	return {
-		isSupported: browserSupportsLocalStorage,
-		add: addToLocalStorage,
-		get: getFromLocalStorage,
-		getParsed: getFromLocalStorageParseJson,
-		remove: removeFromLocalStorage,
-		clearAll: clearAllFromLocalStorage,
-		cookie: {
-			add: addToCookies,
-			get: getFromCookies,
-			remove: removeFromCookies,
-			clearAll: clearAllFromCookies
-		}
-	};
-
 }]);

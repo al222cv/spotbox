@@ -1,19 +1,40 @@
 <!doctype html>
 <html lang="en" ng-app="app">
 <head>
-    <link href="app.css" type="text/css" rel="stylesheet">
+    <link href="css/app.css" type="text/css" rel="stylesheet">
+    <link href="css/fontello.css" type="text/css" rel="stylesheet">
     <meta id="vp" name="viewport" content="width=device-width,height=device-height, initial-scale=1.0,maximum-scale=1.0,user-scalable=0">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
 </head>
 <body>
     <header>
-        <button>☰</button>
-        <h2>{{pageTitle}}</h2>
+        <div ng-hide="showSearch" class="menu">
+            <button ng-click="goHome()"><i class="icon-menu"></i></button>
+            <h2>{{pageTitle}}</h2>
+            <button class="search-btn" ng-click="goToSearch()"><i class="icon-search"></i></button>    
+        </div>
+        <div ng-show="showSearch" class="search" ng-class="{active:searchActive}">
+            <button ng-click="showSearch = false"><i class="icon-left-open-big"></i></button>
+            <form name="searchForm" ng-submit="search()">
+                <input type="search" ng-model="term" ng-blur="blur()" placeholder="Search song or artist" />
+            </form>
+        </div>
     </header>
 	<div class="content" ng-view></div>
+    <div class="player">
+        <img ng-src="{{playingAlbumArt}}">
+        <div>
+            <p>{{playingTrack.title}}</p>
+            <p>{{playingTrack.artist}}</p>
+        </div>
+        <button ng-show="isPlaying" ng-click="stop()"><i class="icon-stop"></i></button>
+        <button ng-hide="isPlaying" ng-click="play()"><i class="icon-play"></i></button>
+    </footer>
 	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.1/angular.js"></script>
 	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.1/angular-route.min.js"></script>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.1/angular-touch.min.js"></script>
+    <script type="text/javascript" src="js/pouchdb-nightly.js"></script>
 	<script type="text/javascript" src="js/app.js"></script>
 </body>
 </html>

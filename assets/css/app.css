@@ -1,0 +1,205 @@
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed, 
+figure, figcaption, footer, header, hgroup, 
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-size: 100%;
+    font: inherit;
+    vertical-align: baseline;
+}
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure, 
+footer, header, hgroup, menu, nav, section {
+    display: block;
+}
+body {
+    line-height: 1;
+}
+ol, ul {
+    list-style: none;
+}
+blockquote, q {
+    quotes: none;
+}
+blockquote:before, blockquote:after,
+q:before, q:after {
+    content: '';
+    content: none;
+}
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+/* App */
+body{
+    font-family: arial, sans-serif;
+    /*color: #555555;*/
+    color: #696969;
+    background: #F5F5F5;
+}
+
+header, .player{
+    background: #363636;
+    color: #fff;
+    position: fixed;
+    width: 100%;
+    box-sizing:border-box;
+}
+
+header{
+    top:0;
+    left: 0;
+    border-bottom: 3px solid #84E0C2;
+}
+
+.player{
+    bottom: 0;
+    left: 0;
+}
+
+header button, .player button{
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 18px;
+  padding: 8px 5px;
+}
+
+header .search-btn{
+    float: right;
+}
+
+header h2{
+    display: inline-block;
+    font-size: 18px;
+}
+
+header > div{
+    height: 100%;
+}
+
+header .search{
+    background: #fff;
+}
+
+header .search i{
+    color: #84E0C2;
+}
+
+header .search form{
+    display: inline-block;
+    width: calc(100% - 45px);
+}
+
+
+header .search form input[type="search"]{
+    width: calc(100% - 40px);
+    border: none;
+    height: 41px;
+    padding: 0 8px;
+    font-size: 18px;
+}
+
+textarea:focus, input:focus{
+    outline: 0;
+}
+
+header .search.active{
+    width: 100%;
+    position: absolute;
+    top: 0;
+    right: 0;
+}
+
+.player{
+    box-sizing: border-box;
+    height: 60px;
+}
+
+.player img{
+    width: 60px;
+}
+
+.player div{
+    box-sizing: border-box;
+    width: calc(100% - 110px);
+    display: inline-block;
+    vertical-align: top;
+    padding-top: 14px;
+    padding-left: 10px;
+}
+
+.player button{
+    vertical-align: top;
+    margin-top: 14px;
+}
+
+
+.content{
+    margin-top: 45px;
+    padding: 15px 15px 80px 15px;
+}
+
+.content button{
+    padding: 10px;
+    width: 100%;
+}
+
+.list li {
+    padding: 10px 5px;
+    border-bottom: 1px solid #E9E8E4;
+}
+
+.list li a{
+    color: #696969;
+}
+
+.list li div, .list li i{
+    display: inline-block;
+}
+
+.list li div{
+    width: calc(100% - 45px);
+}
+.list li div.active{
+    font-weight: bold;
+}
+
+.list li i{
+    width: 31px;
+    font-size: 22px;
+    margin-top: 5px;
+    margin-right: 8px;
+    vertical-align: top;
+    color: #84E0C2;
+}
+
+.list li h3, .player div p:first-child{
+    font-size: 17px;
+    overflow-x: hidden;
+    white-space:nowrap; 
+    overflow:hidden; 
+    text-overflow:ellipsis;
+}
+.list li p, .player div p:last-child{
+    margin-top: 5px;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: #ADADAD;
+    overflow-x: hidden;
+    white-space:nowrap; 
+    overflow:hidden; 
+    text-overflow:ellipsis;
+}

@@ -1,7 +1,13 @@
-<button ng-click="addPlaylist()">Add playlist</button>
-
 <ul class="list">
-    <li ng-repeat="p in playlists">{{p.name}}</li>
+    <li ng-repeat="p in playlists">
+        <a ng-href="#/playlist?id={{p.value.id}}">
+            <i class="icon-music"></i>
+            <div>
+                <h3>{{p.value.uri}}</h3>
+                <p>{{p.value.trackscount}} tracks</p>
+            </div>
+        </a>
+    </li>
 </ul>
 
 <!-- <form name="searchForm" ng-submit="search()">

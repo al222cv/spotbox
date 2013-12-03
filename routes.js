@@ -7,7 +7,10 @@ module.exports = {
   search: search,
   stream: stream,
   play: play,
-  stop: stop
+  stop: stop,
+  albumart: albumart,
+  playlist: playlist, 
+  playlists: playlists
 };
 
 function main (req, res){
@@ -20,11 +23,29 @@ function search(req, res){
 	});
 }
 
+function albumart(req, res){
+  spotify.albumArt(req.query.albumUri, function(uri){
+    res.json({uri: uri});
+  });
+}
+
+function playlist(req, res){
+  console.log(req.query.uri);
+  spotify.playlist(req.query.uri, function(playlist){
+    res.json(playlist);
+  })
+}
+
+function playlists(req, res){
+  spotify.playlists(function(playlists){
+    res.json(playlists);
+  })
+}
+
 function play(req, res) {
   if (player) player.kill();
   player = childProcess.fork('./player');
   player.send(req.query.uri);
-  res.writeHead(302, {'Location': '/'});
   res.end();
 }
 
@@ -37,4 +58,5 @@ function stream(q, r) {
     var uri = q.params[0];
     require('./stream/spotify')(uri).pipe(r);
 }
+
 
