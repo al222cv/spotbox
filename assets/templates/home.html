@@ -1,9 +1,10 @@
+<button ng-click="new()">New playlist</button>
 <ul class="list">
     <li ng-repeat="p in playlists">
         <a ng-href="#/playlist?id={{p.value.id}}">
             <i class="icon-music"></i>
             <div>
-                <h3>{{p.value.uri}}</h3>
+                <h3>{{p.value.title}}</h3>
                 <p>{{p.value.trackscount}} tracks</p>
             </div>
         </a>

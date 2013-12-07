@@ -3,6 +3,7 @@ var config 		= require('./config');
 var through    	= require('through');
 var hyperquest 	= require('hyperquest');
 var JSONStream 	= require('JSONStream');
+var xml2js 		= require('xml2js');
 var http		= require('http');
 
 module.exports = {
@@ -50,14 +51,11 @@ function albumArt(albumUri, callback){
 
 		spotify.get(albumUri, function (err, album) {
 			if (err) throw err;
-		
+	    	spotify.disconnect();
 			album.cover.forEach(function (image) {
 				if(image.size == 'SMALL')
 					callback(image.uri);
-				//console.log('%s: %s', image.size, image.uri);
 			});
-
-	    	spotify.disconnect();
 		});
 	});
 }
@@ -72,26 +70,36 @@ function playlist(uri, callback){
 	  spotify.playlist(uri, skip, take, function (err, playlist) {
 	    if (err) throw err;
 
-	    var uri = 'http://ws.spotify.com/lookup/1/.json?uri=';
-		var parsingKeys = ['track', true];
 		var tracks = [];
   		var playlistItems = playlist.contents.items;
 	    
-	    spotify.disconnect();
-
+	    var i = 0;
 		playlistItems.forEach(function(item){
-	    	http.get(uri + item.uri, function(res) {
-			   res.on('data', function (chunk) {
-			   	var track = parseTrack(JSON.parse(chunk).track)
-			    tracks.push(track);
-			    end();
-			  });
+			spotify.get(item.uri, function(err, track){
+				if(!!!track) {
+					playlistItems.splice(i, 1);
+					end();
+				}
+				else{
+					var trackModel = {
+						artist: track.artist.map(function(x) { return x.name; }).join(', '),
+						title: track.name,
+						uri: item.uri,
+						durationMs: track.duration,
+						albumUri: item.uri
+					}
+					tracks.push(trackModel);
+					end();
+					i++;	
+				}
 			});
 	    });
 		
 		function end() {
-			if(playlistItems.length == tracks.length)
+			if(playlistItems.length == tracks.length){
+				spotify.disconnect();
 				callback(tracks);
+			}
 		}
 
 	  });

@@ -11,7 +11,9 @@ module.exports = function(uri) {
       track
         .play()
         .pipe(stream)
-        .on('finish', spotify.disconnect.bind(spotify))
+        .on('finish', function(){
+          spotify.disconnect.bind(spotify)
+        })
         //todo: tell client that i'm finished and start playing next track
       ;
     });

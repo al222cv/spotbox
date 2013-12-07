@@ -1,9 +1,14 @@
 <ul class="list">
-    <li ng-repeat="t in tracks" ng-click="play(t,$index)">
-        <i class="icon-play"></i>
-        <div ng-class="{active: $index == currTrack}">
+    <li ng-repeat="t in tracks">
+        <i class="icon-play" ng-click="play(t,$index)"></i>
+        <div class="track-info" ng-class="{active: $index == currTrack}" ng-click="play(t,$index)">
             <h3>{{t.title}}</h3>
             <p>{{t.artist}}</p>
+        </div>
+        <div class="add-to">
+            <select width="15" ng-change="addTo(playlistId, t)" ng-model="playlistId" ng-options="pl.value.id as pl.value.title for pl in playlists">
+                <option value="" disabled>+</option>
+            </select>
         </div>
     </li>
 </ul>

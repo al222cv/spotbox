@@ -56,6 +56,7 @@ header, .player{
     position: fixed;
     width: 100%;
     box-sizing:border-box;
+    z-index: 1;
 }
 
 header{
@@ -170,11 +171,8 @@ header .search.active{
     display: inline-block;
 }
 
-.list li div{
-    width: calc(100% - 45px);
-}
-.list li div.active{
-    font-weight: bold;
+.list li .track-info{
+    width: calc(100% - 70px);
 }
 
 .list li i{
@@ -184,6 +182,34 @@ header .search.active{
     margin-right: 8px;
     vertical-align: top;
     color: #84E0C2;
+}
+
+.list li .add-to{
+    vertical-align: top;
+    margin-top: 3px;
+    position: relative;
+}
+
+.list li .add-to select{
+    position:relative;
+    width: 22px;
+    background: transparent;
+    border: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    color: #ADADAD;
+    font-size: 22px;
+    font-weight: bold;
+    /*position: absolute;*/
+    /*top: 2px;*/
+    /*opacity: 0;*/
+}
+
+.list li .add-to i.icon-plus{
+    color: #ADADAD;
+    width: 15px;
+    font-size: 14px;
 }
 
 .list li h3, .player div p:first-child{

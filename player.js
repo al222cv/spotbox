@@ -1,7 +1,6 @@
 var through = require('through');
 var speaker = require('speaker')();
 var decoder = require('lame').Decoder();
-var stream  = require('./routes').stream;
 
 process.on('message', function(uri) {
  var track = through();
@@ -10,3 +9,9 @@ process.on('message', function(uri) {
      .pipe(decoder)
      .pipe(speaker);
 });
+
+
+function stream(q, r) {
+    var uri = q.params[0];
+    require('./stream/spotify')(uri).pipe(r);
+}
